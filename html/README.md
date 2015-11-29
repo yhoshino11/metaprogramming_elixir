@@ -22,6 +22,6 @@ iex> Template.render
       end
     end
   end
-> ast |> Macro.postwalk &(IO.inspect(&1)) # depth-first approach
-> ast |> Macro.prewalk &(IO.inspect(&1))  # breadth-first approach
+> ast |> Macro.postwalk &(IO.inspect(&1)) # breadth-first approach
+> ast |> Macro.prewalk &(IO.inspect(&1))  # depth-first approach
 ```
