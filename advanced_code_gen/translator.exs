@@ -23,7 +23,7 @@ defmodule Translator do
     end
 
     quote do
-      def t(locale, path, bindings \\ [])
+      def t(locale, path, binding \\ [])
       unquote(translations_ast)
       def t(_locale, _path, _bindings), do: {:error, :no_translation}
     end
@@ -45,7 +45,7 @@ defmodule Translator do
   end
 
   defp interpolate(string) do
-    ~r/(?<head>)%{[^]|+}(?<tail>)/
+    ~r/(?<head>)%{[^}]+}(?<tail>)/
     |> Regex.split(string, on: [:head, :tail])
     |> Enum.reduce "", fn
       <<"%{"<> rest >>, acc->
