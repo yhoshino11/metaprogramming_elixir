@@ -5,10 +5,34 @@ defmodule Html do
   end)
 
   for tag <- @tags do
-    defmacro unquote(tag)(do: inner) do
+    defmacro unquote(tag)(attrs, do: inner) do
       tag = unquote(tag)
-      quote do: tag(unquote(tag), do: unquote(inner))
+      quote do: tag(unquote(tag), unquote(attrs), do: unquote(inner))
     end
+
+    defmacro unquote(tag)(attrs \\ []) do
+      tag = unquote(tag)
+      quote do: tag(unquote(tag), unquote(attrs))
+    end
+  end
+
+  defmacro tag(name, attrs \\ []) do
+    {inner, attrs} = Dict.pop(attrs, :do)
+    quote do: tag(unquote(name), unquote(attrs), do: unquote(inner))
+  end
+
+  defmacro tag(name, attrs, do: inner) do
+    quote do
+      put_buffer var!(buffer, Html), open_tag(unquote_splicing([name, attrs]))
+      unquote(inner)
+      put_buffer var!(buffer, Html), "</#{unquote(name)}>"
+    end
+  end
+
+  def open_tag(name, []), do: "<#{name}>"
+  def open_tag(name, attrs) do
+    attr_html = for {key, val} <- attrs, into: "", do: "#{key}=\"#{val}\""
+    "<#{name}#{attr_html}>"
   end
 
   defmacro markup(do: block) do
@@ -29,14 +53,6 @@ defmodule Html do
   def put_buffer(buff, content), do: Agent.update(buff, &[content | &1])
 
   def render(buff), do: Agent.get(buff, &(&1)) |> Enum.reverse |> Enum.join("")
-
-  defmacro tag(name, do: inner) do
-    quote do
-      put_buffer var!(buffer, Html), "<#{unquote(name)}>"
-      unquote(inner)
-      put_buffer var!(buffer, Html), "</#{unquote(name)}>"
-    end
-  end
 
   defmacro text(string) do
     quote do: put_buffer(var!(buffer, Html), to_string(unquote(string)))
